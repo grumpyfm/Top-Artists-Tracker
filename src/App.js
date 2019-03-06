@@ -4,25 +4,28 @@ import './App.css';
 import {Navbar, Form, FormControl, Button, Nav} from 'react-bootstrap';
 import SearchResult from './components/searchResult';
 import ArtistDetail from './components/artistDetail';
+import Autocomplete from 'react-autocomplete';
 
 const Dashboard = lazy(() => import('./components/dashboard'));
-
 
 class App extends Component {
     state = {
         KEY: '86ef0c95113dbb5b722096388d0efd20',
-        defaultImage:'http://warnerclassics.de.457elmp30.blackmesh.com/img_style/default_cover_m.jpg',
+        defaultImage: 'http://warnerclassics.de.457elmp30.blackmesh.com/img_style/default_cover_m.jpg',
         ukraineTopArtists: [],
         favoriteArtists: [],
         artistDetail: [],
-        artistName: 'undefined',
-        toDashboard: false,
+        artistPath: '',
+        toSearchList: false,
+        toSearchItem: false,
         searchItem: '',
         searchResult: [],
+        value: '',
+        suggest: []
+
     };
 
     render() {
-
         return (
             <Router>
                 <div>
@@ -30,37 +33,60 @@ class App extends Component {
                         <Navbar.Toggle aria-controls="basic-navbar-nav"/>
                         <Navbar.Collapse id="basic-navbar-nav">
                             <Nav className="mr-auto">
-                                <Link className="navbar-brand" onClick={this.updateDashboardState} to="/">Artists</Link>
-                                <Link className="navbar-brand" onClick={this.updateDashboardState} to='/favorites'>Favorites</Link>
+                                <Link className="navbar-brand" onClick={this.delSearchValue} to="/">Artists</Link>
+                                <Link className="navbar-brand" onClick={this.delSearchValue}
+                                      to='/favorites'>Favorites</Link>
                             </Nav>
-                            <Form inline onSubmit={this.submitHandler}>
-                                <FormControl type="text" placeholder="Search"
-                                             onChange={this.handleChange}
-                                             className="mr-sm-2"/>
-                                <Button variant="outline-success" type='sybmit'>Search</Button>
+                            <Form inline onSubmit={(e) => this.handleSubmit(e)}>
+                                <div className='mr-sm-2 searchForm'>
+                                    <Autocomplete
+                                        autoHighlight={false}
+                                        value={this.state.value}
+                                        items={this.state.suggest}
+                                        shouldItemRender={(item, value) => item.name.toLowerCase().indexOf(value.toLowerCase()) > -1}
+                                        getItemValue={item => item.name}
+                                        renderItem={(item, highlighted) =>
+                                            <div
+                                                key={item.id}
+                                                style={{backgroundColor: highlighted ? '#eee' : 'transparent'}}
+                                            >
+                                                {item.name}
+                                            </div>
+                                        }
+                                        onSelect={value => {
+                                            this.setState({value});
+                                            this.handleSelect(value)
+                                        }}
+                                        onChange={e => {
+                                            this.handleChange(e)
+                                        }}/>
+                                </div>
                             </Form>
                         </Navbar.Collapse>
+
                     </Navbar>
+
                     <div className=' d-flex justify-content-around flex-wrap'>
                         <Route exact path='' component={this.homePage}/>
                         <Route exact path={'/searchResult'} component={this.searchResultPage}/>
                         <Route exact path={'/favorites'} component={this.favoritesPage}/>
-                        <Route exact path={`/${this.state.artistName}`} component={this.artistDetailPage}/>
+                        <Route exact path={`/artist/${this.state.artistPath}`} component={this.artistDetailPage}/>
                     </div>
                 </div>
             </Router>
         );
     }
 
-
     homePage = () => {
         return (
             <Suspense fallback={<div>Loading...</div>}>
                 <Dashboard
+                    artistPath={this.state.artistPath}
                     defaultImage={this.state.defaultImage}
                     favoriteArtists={this.state.favoriteArtists}
                     addRemoveFavorite={this.addRemoveFavorite}
-                    toDashboard={this.state.toDashboard}
+                    toSearchItem={this.state.toSearchItem}
+                    toSearchList={this.state.toSearchList}
                     handleArtistClick={this.handleArtistClick}
                     atistsList={this.state.ukraineTopArtists}/>
             </Suspense>)
@@ -68,8 +94,9 @@ class App extends Component {
     searchResultPage = () => {
         return (
             <SearchResult
+                artistPath={this.state.artistPath}
                 defaultImage={this.state.defaultImage}
-                toDashboard={this.state.toDashboard}
+                toSearchItem={this.state.toSearchItem}
                 favoriteArtists={this.state.favoriteArtists}
                 atistsList={this.state.searchResult}
                 handleSearch={this.handleSearch}
@@ -83,7 +110,8 @@ class App extends Component {
                 defaultImage={this.state.defaultImage}
                 favoriteArtists={this.state.favoriteArtists}
                 addRemoveFavorite={this.addRemoveFavorite}
-                toDashboard={this.state.toDashboard}
+                toSearchItem={this.state.toSearchItem}
+                toSearchList={this.state.toSearchList}
                 handleArtistClick={this.handleArtistClick}
                 atistsList={this.state.favoriteArtists}/>
         )
@@ -91,19 +119,44 @@ class App extends Component {
     artistDetailPage = () => {
         return (
             <ArtistDetail
-                toDashboard={this.state.toDashboard}
+                toSearchList={this.state.toSearchList}
                 updateArtistDetails={this.updateArtistDetails}
                 artistDetail={this.state.artistDetail}
                 handleArtistDetails={this.handleArtistDetails}
             />
         )
     };
+
+    componentDidMount() {
+        fetch(`http://ws.audioscrobbler.com/2.0/?method=geo.gettopartists&country=ukraine&api_key=${this.state.KEY}&format=json`)
+            .then(
+                response => {
+                    response.json()
+                        .then((data) => {
+                            this.setState({ukraineTopArtists: data.topartists.artist});
+                        })
+                }
+            );
+    }
+
+    handleSubmit = (e) => {
+        e.preventDefault();
+        if (this.state.value !== '') {
+            this.setState({
+                toSearchList: true,
+
+            });
+            this.handleSearch();
+            this.setState({
+                value: ''
+            });
+        }
+    };
     handleSearch = () => {
-        fetch(`http://ws.audioscrobbler.com/2.0/?method=artist.search&artist=${this.state.searchItem}&api_key=${this.state.KEY}&format=json`)
+        fetch(`http://ws.audioscrobbler.com/2.0/?method=artist.search&artist=${this.state.value}&api_key=${this.state.KEY}&format=json`)
             .then(response => {
                 response.json()
                     .then((data) => {
-                        console.log('data',data);
                         this.setState({
                             searchResult: data.results.artistmatches.artist
                         });
@@ -112,21 +165,43 @@ class App extends Component {
     };
     handleChange = (event) => {
         this.setState({
-            searchItem: event.target.value
+            value: event.target.value
         });
+        if (event.target.value !== '') {
+            fetch(`http://ws.audioscrobbler.com/2.0/?method=artist.search&artist=${event.target.value}&limit=10&api_key=${this.state.KEY}&format=json`)
+                .then(response => {
+                    response.json()
+                        .then((data) => {
+                            let res = (data.results.artistmatches.artist).map((el) => ({id: el.name, name: el.name}));
+                            this.setState({
+                                suggest: res
+                            });
+                        })
+                })
+        }
     };
-updateDashboardState=()=>{
-    this.setState({
-        toDashboard: false
-    });
-}
-    submitHandler = (evt) => {
-        evt.preventDefault();
-        if (this.state.searchItem !== '') {
+    delSearchValue = () => {
+        this.setState({
+            toSearchList: false
+        });
+        this.setState({
+            value: ''
+        });
+        this.setState({
+            toSearchItem: false
+        });
+
+    };
+    handleSelect = (value) => {
+        if (this.state.value !== '') {
             this.setState({
-                toDashboard: true
+                artistPath: value
             });
-            this.handleSearch();
+            this.setState({
+                toSearchItem: true,
+
+            });
+
         }
     };
     addRemoveFavorite = (el) => {
@@ -146,23 +221,10 @@ updateDashboardState=()=>{
         this.setState({favoriteArtists: res})
 
     };
-
-    componentDidMount() {
-        fetch(`http://ws.audioscrobbler.com/2.0/?method=geo.gettopartists&country=ukraine&api_key=${this.state.KEY}&format=json`)
-            .then(
-                response => {
-                    response.json()
-                        .then((data) => {
-                            this.setState({ukraineTopArtists: data.topartists.artist});
-                        })
-                }
-            );
-    }
-
-    handleArtistClick = (artist) => {
-        this.setState({artistName: artist});
+    handleArtistClick = (name) => {
+        this.setState({artistPath: name});
         this.setState({
-            toDashboard: false
+            toSearchList: false
         });
     };
     updateArtistDetails = (artist) => {
@@ -170,7 +232,7 @@ updateDashboardState=()=>{
 
     };
     handleArtistDetails = () => {
-        fetch(`http://ws.audioscrobbler.com/2.0/?method=artist.getinfo&artist=${this.state.artistName}&api_key=${this.state.KEY}&format=json`)
+        fetch(`http://ws.audioscrobbler.com/2.0/?method=artist.getinfo&artist=${this.state.artistPath}&api_key=${this.state.KEY}&format=json`)
             .then(
                 response => {
                     response.json()

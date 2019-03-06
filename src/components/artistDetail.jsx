@@ -4,10 +4,10 @@ import {Redirect} from "react-router-dom";
 
 class ArtistDetail extends Component {
     render() {
-        console.log('render');
-
-        if (this.props.toDashboard === true) {
+        if (this.props.toSearchList === true) {
             return <Redirect to='/searchResult'/>
+        } else if (this.props.toSearchItem === true) {
+            return <Redirect to={`/artist/${this.props.artistPath}`}/>
         }
         return (
             this.props.artistDetail.length !== 0 && (

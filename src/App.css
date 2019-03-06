@@ -25,3 +25,9 @@
 .red{
   color: red;
 }
+.searchForm{
+  z-index: 20;
+}
+.searchForm input{
+  border-radius: 7px;
+}

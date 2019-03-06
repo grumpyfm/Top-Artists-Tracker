@@ -4,15 +4,17 @@ import {Link, Redirect} from "react-router-dom";
 class Dashboard extends Component {
 
     render() {
-        if (this.props.toDashboard === true) {
+        if (this.props.toSearchList === true) {
             return <Redirect to='/searchResult'/>
+        } else if (this.props.toSearchItem === true) {
+            return <Redirect to={`/artist/${this.props.artistPath}`}/>
         }
         if (this.props.atistsList.length !== 0) {
             return (
 
                 this.props.atistsList.map((el, index) =>
                     <div className='artistItem' key={index}>
-                        <Link to={{pathname: `/${el.name}`}}
+                        <Link to={{pathname: `/artist/${el.name}`}}
                               onClick={() => this.props.handleArtistClick(el.name)}>
                             <div><img className='songListImg'
                                       src={el.image[2]['#text'] !== '' ? (el.image[2]['#text']) : (this.props.defaultImage)}/>
