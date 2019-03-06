@@ -7,13 +7,15 @@ class Dashboard extends Component {
         if (this.props.toSearchItem === true) {
             return <Redirect to={`/artist/${this.props.artistPath}`}/>
         }
-        if(this.props.atistsList.length!==0){
-        return (
+        if (this.props.atistsList.length !== 0) {
+            return (
                 this.props.atistsList.map((el, index) =>
                     <div className='artistItem' key={index}>
                         <Link to={{pathname: `/artist/${el.name}`}}
                               onClick={() => this.props.handleArtistClick(el.name)}>
-                            <div><img className='songListImg' src={el.image[2]['#text']!==''?(el.image[2]['#text']):(this.props.defaultImage)} alt=""/></div>
+                            <div><img className='songListImg'
+                                      src={el.image[2]['#text'] !== '' ? (el.image[2]['#text']) : (this.props.defaultImage)}
+                                      alt=""/></div>
                             <p> {el.name}</p>
                         </Link>
                         <i key={index} onClick={() => {
@@ -21,11 +23,11 @@ class Dashboard extends Component {
                         }} className={`fas fa-heart heartIcon ${this.checkIfFav(el) ? ('red') : ('')}`}/>
                     </div>
                 )
-            )}else {
-                            return(<div>no items</div>)
+            )
+        } else {
+            return (<div>no items</div>)
         }
     }
-
 
     checkIfFav = (obj) => {
         return this.props.favoriteArtists.find((el) => el === obj);

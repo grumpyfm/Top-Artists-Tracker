@@ -13,7 +13,7 @@ class Dashboard extends Component {
             return (
 
                 this.props.atistsList.map((el, index) =>
-                    <div className='artistItem' key={index}>
+                    <div className='artistItem ' key={index}>
                         <Link to={{pathname: `/artist/${el.name}`}}
                               onClick={() => this.props.handleArtistClick(el.name)}>
                             <div><img className='songListImg'
@@ -33,7 +33,7 @@ class Dashboard extends Component {
     }
 
     checkIfFav = (obj) => {
-        return this.props.favoriteArtists.find((el) => el === obj);
+        return this.props.favoriteArtists.find((el) => el.name === obj.name);
 
     };
 

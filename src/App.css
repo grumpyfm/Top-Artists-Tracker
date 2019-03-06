@@ -1,33 +1,41 @@
 .App {
 }
 
-.artistItem{
-  word-wrap: break-word;
-  max-width: 174px;
-  position: relative;
-  text-align: center;
-  margin: 0.5rem;
+.artistItem {
+    word-wrap: break-word;
+    max-width: 174px;
+    position: relative;
+    text-align: center;
+    margin: 0.5rem;
 }
 
-.songListImg{
-  width: 174px;
+.songListImg {
+    width: 174px;
 }
-.heartIcon{
-  font-size: 20px;
-  border-radius: 2px;
-  color: #d8d8d8;
-  position: absolute;
-  padding: 6px;
-  right: 10px;
-  top: 10px;
-  background-color: #e9ecef;
+
+.heartIcon {
+    font-size: 20px;
+    border-radius: 2px;
+    color: #d8d8d8;
+    position: absolute;
+    padding: 6px;
+    right: 10px;
+    top: 10px;
+    background-color: #e9ecef;
 }
-.red{
-  color: red;
+
+.red {
+    color: red;
 }
-.searchForm{
-  z-index: 20;
+
+.searchForm {
+    z-index: 20;
 }
-.searchForm input{
-  border-radius: 7px;
+
+.searchForm input {
+    border-radius: 7px;
+}
+
+.artistDetailBlock {
+    position: relative;
 }

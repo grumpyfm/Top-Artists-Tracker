@@ -1,7 +1,7 @@
 import React, {Component, lazy, Suspense} from 'react';
 import {BrowserRouter as Router, Route, Link, Redirect} from "react-router-dom";
 import './App.css';
-import {Navbar, Form, FormControl, Button, Nav} from 'react-bootstrap';
+import {Navbar, Form, Nav} from 'react-bootstrap';
 import SearchResult from './components/searchResult';
 import ArtistDetail from './components/artistDetail';
 import Autocomplete from 'react-autocomplete';
@@ -119,6 +119,10 @@ class App extends Component {
     artistDetailPage = () => {
         return (
             <ArtistDetail
+                artistPath={this.state.artistPath}
+                handleArtistClick={this.handleArtistClick}
+                addRemoveFavorite={this.addRemoveFavorite}
+                favoriteArtists={this.state.favoriteArtists}
                 toSearchList={this.state.toSearchList}
                 updateArtistDetails={this.updateArtistDetails}
                 artistDetail={this.state.artistDetail}
@@ -222,6 +226,7 @@ class App extends Component {
 
     };
     handleArtistClick = (name) => {
+        console.log(name);
         this.setState({artistPath: name});
         this.setState({
             toSearchList: false
@@ -232,6 +237,7 @@ class App extends Component {
 
     };
     handleArtistDetails = () => {
+        let artist;
         fetch(`http://ws.audioscrobbler.com/2.0/?method=artist.getinfo&artist=${this.state.artistPath}&api_key=${this.state.KEY}&format=json`)
             .then(
                 response => {
@@ -239,7 +245,8 @@ class App extends Component {
                         .then((data) => {
                             this.updateArtistDetails(data.artist);
                         })
-                })
+                });
+
     }
 
 }
