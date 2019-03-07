@@ -1,42 +1,37 @@
-import React, {Component,} from 'react';
+import React from 'react';
 import {Link, Redirect} from "react-router-dom";
 
-class Dashboard extends Component {
-
-    render() {
-        if (this.props.toSearchList === true) {
+const Dashboard=(props)=> {
+        if (props.toSearchList === true) {
             return <Redirect to='/searchResult'/>
-        } else if (this.props.toSearchItem === true) {
-            return <Redirect to={`/artist/${this.props.artistPath}`}/>
+        } else if (props.toSearchItem === true) {
+            return <Redirect to={`/artist/${props.artistPath}`}/>
         }
-        if (this.props.atistsList.length !== 0) {
+        if (props.atistsList.length !== 0) {
             return (
-
-                this.props.atistsList.map((el, index) =>
+                props.atistsList.map((el, index) =>
                     <div className='artistItem ' key={index}>
                         <Link to={{pathname: `/artist/${el.name}`}}
-                              onClick={() => this.props.handleArtistClick(el.name)}>
-                            <div><img className='songListImg'
-                                      src={el.image[2]['#text'] !== '' ? (el.image[2]['#text']) : (this.props.defaultImage)}/>
+                              onClick={() => props.handleArtistClick(el.name)}>
+                            <div>
+                                <img className='songListImg' alt='' src={el.image[2]['#text'] !== '' ? (el.image[2]['#text']) : (props.defaultImage)}/>
                             </div>
                             <p> {el.name}</p>
                         </Link>
                         <i key={index} onClick={() => {
-                            this.props.addRemoveFavorite(el)
-                        }} className={`fas fa-heart heartIcon ${this.checkIfFav(el) ? ('red') : ('')}`}/>
+                            props.addRemoveFavorite(el)
+                        }} className={`fas fa-heart heartIcon ${checkIfFav(el) ? ('red') : ('')}`}/>
                     </div>
                 ))
         } else {
-            return (<div>Add some Artists </div>
+            return (<div>List is empty</div>
             )
         }
+
+  function checkIfFav(artist){
+        return props.favoriteArtists.find((el) => el.name === artist.name);
     }
 
-    checkIfFav = (obj) => {
-        return this.props.favoriteArtists.find((el) => el.name === obj.name);
-
-    };
-
-}
+};
 
 export default Dashboard;

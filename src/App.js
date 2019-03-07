@@ -1,10 +1,9 @@
 import React, {Component, lazy, Suspense} from 'react';
-import {BrowserRouter as Router, Route, Link, Redirect} from "react-router-dom";
+import {BrowserRouter as Router, Link, Route} from "react-router-dom";
 import './App.css';
-import {Navbar, Form, Nav} from 'react-bootstrap';
-import SearchResult from './components/searchResult';
 import ArtistDetail from './components/artistDetail';
 import Autocomplete from 'react-autocomplete';
+import {Form, Nav, Navbar} from "react-bootstrap";
 
 const Dashboard = lazy(() => import('./components/dashboard'));
 
@@ -15,14 +14,15 @@ class App extends Component {
         ukraineTopArtists: [],
         favoriteArtists: [],
         artistDetail: [],
+        searchResult: [],
+        suggest: [],
+
         artistPath: '',
+        searchItem: '',
+        value: '',
+
         toSearchList: false,
         toSearchItem: false,
-        searchItem: '',
-        searchResult: [],
-        value: '',
-        suggest: []
-
     };
 
     render() {
@@ -33,9 +33,8 @@ class App extends Component {
                         <Navbar.Toggle aria-controls="basic-navbar-nav"/>
                         <Navbar.Collapse id="basic-navbar-nav">
                             <Nav className="mr-auto">
-                                <Link className="navbar-brand" onClick={this.delSearchValue} to="/">Artists</Link>
-                                <Link className="navbar-brand" onClick={this.delSearchValue}
-                                      to='/favorites'>Favorites</Link>
+                                <Link className="navbar-brand" onClick={this.cleanSearchValue} to="/">Artists</Link>
+                                <Link className="navbar-brand" onClick={this.cleanSearchValue} to='/favorites'>Favorites</Link>
                             </Nav>
                             <Form inline onSubmit={(e) => this.handleSubmit(e)}>
                                 <div className='mr-sm-2 searchForm'>
@@ -63,9 +62,7 @@ class App extends Component {
                                 </div>
                             </Form>
                         </Navbar.Collapse>
-
                     </Navbar>
-
                     <div className=' d-flex justify-content-around flex-wrap'>
                         <Route exact path='' component={this.homePage}/>
                         <Route exact path={'/searchResult'} component={this.searchResultPage}/>
@@ -93,13 +90,13 @@ class App extends Component {
     };
     searchResultPage = () => {
         return (
-            <SearchResult
+            <Dashboard
                 artistPath={this.state.artistPath}
                 defaultImage={this.state.defaultImage}
                 toSearchItem={this.state.toSearchItem}
+                toSearchList={false}
                 favoriteArtists={this.state.favoriteArtists}
                 atistsList={this.state.searchResult}
-                handleSearch={this.handleSearch}
                 handleArtistClick={this.handleArtistClick}
                 addRemoveFavorite={this.addRemoveFavorite}
             />)
@@ -107,14 +104,14 @@ class App extends Component {
     favoritesPage = () => {
         return (
             <Dashboard
+                artistPath={this.state.artistPath}
                 defaultImage={this.state.defaultImage}
                 favoriteArtists={this.state.favoriteArtists}
                 addRemoveFavorite={this.addRemoveFavorite}
                 toSearchItem={this.state.toSearchItem}
                 toSearchList={this.state.toSearchList}
                 handleArtistClick={this.handleArtistClick}
-                atistsList={this.state.favoriteArtists}/>
-        )
+                atistsList={this.state.favoriteArtists}/>)
     };
     artistDetailPage = () => {
         return (
@@ -126,9 +123,7 @@ class App extends Component {
                 toSearchList={this.state.toSearchList}
                 updateArtistDetails={this.updateArtistDetails}
                 artistDetail={this.state.artistDetail}
-                handleArtistDetails={this.handleArtistDetails}
-            />
-        )
+                handleArtistDetails={this.handleArtistDetails}/>)
     };
 
     componentDidMount() {
@@ -143,30 +138,25 @@ class App extends Component {
             );
     }
 
+
     handleSubmit = (e) => {
         e.preventDefault();
         if (this.state.value !== '') {
             this.setState({
                 toSearchList: true,
-
             });
-            this.handleSearch();
-            this.setState({
-                value: ''
-            });
+            fetch(`http://ws.audioscrobbler.com/2.0/?method=artist.search&artist=${this.state.value}&api_key=${this.state.KEY}&format=json`)
+                .then(response => {
+                    response.json()
+                        .then((data) => {
+                            this.setState({
+                                searchResult: data.results.artistmatches.artist
+                            });
+                        })
+                })
         }
     };
-    handleSearch = () => {
-        fetch(`http://ws.audioscrobbler.com/2.0/?method=artist.search&artist=${this.state.value}&api_key=${this.state.KEY}&format=json`)
-            .then(response => {
-                response.json()
-                    .then((data) => {
-                        this.setState({
-                            searchResult: data.results.artistmatches.artist
-                        });
-                    })
-            })
-    };
+
     handleChange = (event) => {
         this.setState({
             value: event.target.value
@@ -184,7 +174,7 @@ class App extends Component {
                 })
         }
     };
-    delSearchValue = () => {
+    cleanSearchValue = () => {
         this.setState({
             toSearchList: false
         });
@@ -196,6 +186,9 @@ class App extends Component {
         });
 
     };
+    setValue=(value)=>{
+        this.setState({value:value});
+    };
     handleSelect = (value) => {
         if (this.state.value !== '') {
             this.setState({
@@ -205,20 +198,22 @@ class App extends Component {
                 toSearchItem: true,
 
             });
+            this.setState({
+                toSearchList: false,
+
+            });
 
         }
     };
-    addRemoveFavorite = (el) => {
-        let exist = this.state.favoriteArtists.filter((obj => {
-            return obj.name === el.name
-        }));
+    addRemoveFavorite = (atist) => {
+        let exist = this.state.favoriteArtists.filter((obj => {return obj.name === atist.name}));
         let res = this.state.favoriteArtists;
 
         if (exist.length === 0) {
-            res.push(el);
+            res.push(atist);
         } else {
-            let index = res.map(function (e) {
-                return e.name;
+            let index = res.map(function (itsm) {
+                return itsm.name;
             }).indexOf(exist[0].name);
             res.splice(index, 1);
         }
@@ -237,7 +232,6 @@ class App extends Component {
 
     };
     handleArtistDetails = () => {
-        let artist;
         fetch(`http://ws.audioscrobbler.com/2.0/?method=artist.getinfo&artist=${this.state.artistPath}&api_key=${this.state.KEY}&format=json`)
             .then(
                 response => {
