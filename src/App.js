@@ -4,15 +4,15 @@ import './App.css';
 import ArtistDetail from './components/artistDetail';
 import Autocomplete from 'react-autocomplete';
 import {Form, Nav, Navbar} from "react-bootstrap";
+import Dashboard from './components/dashboard';
 
-
-const Dashboard = lazy(() => import('./components/dashboard'));
 
 class App extends Component {
     state = {
         KEY: '86ef0c95113dbb5b722096388d0efd20',
         defaultImage: 'http://warnerclassics.de.457elmp30.blackmesh.com/img_style/default_cover_m.jpg',
-        activePage: 15,
+        fetchPage: 12,
+        hasMore: true,
 
         ukraineTopArtists: [],
         favoriteArtists: [],
@@ -27,7 +27,27 @@ class App extends Component {
         toSearchList: false,
         toSearchItem: false,
     };
+    fetchMoreData = () => {
+        fetch(`http://ws.audioscrobbler.com/2.0/?method=geo.gettopartists&country=ukraine&limit=12}&page=${this.state.fetchPage}&api_key=${this.state.KEY}&format=json`)
+            .then(
+                response => {
+                    response.json()
+                        .then((data) => {
+                            let res=this.state.ukraineTopArtists;
+                            console.log('res1',res);
+                            data.topartists.artist.forEach(artist=>res.push(artist));
+                            console.log('res2',res);
+                            this.setState({ukraineTopArtists:res });
+                            let page=this.state.fetchPage+1;
+                            this.setState({fetchPage:page});
+                            if(data.topartists.artist.length<12){
+                                this.setState({ hasMore: false });
 
+                            }
+                        })
+                }
+            )
+        };
     render() {
         return (
             <Router>
@@ -67,7 +87,7 @@ class App extends Component {
                             </Form>
                         </Navbar.Collapse>
                     </Navbar>
-                    <div className=' d-flex justify-content-around flex-wrap'>
+                    <div className=' '>
                         <Route exact path='' component={this.homePage}/>
                         <Route exact path={'/searchResult'} component={this.searchResultPage}/>
                         <Route exact path={'/favorites'} component={this.favoritesPage}/>
@@ -83,8 +103,9 @@ class App extends Component {
     };
     homePage = () => {
         return (
-            <Suspense fallback={<div>Loading...</div>}>
                 <Dashboard
+                    hasMore={this.state.hasMore}
+                    fetchMoreData={this.fetchMoreData}
                     artistPath={this.state.artistPath}
                     defaultImage={this.state.defaultImage}
                     favoriteArtists={this.state.favoriteArtists}
@@ -92,8 +113,7 @@ class App extends Component {
                     toSearchItem={this.state.toSearchItem}
                     toSearchList={this.state.toSearchList}
                     handleArtistClick={this.handleArtistClick}
-                    atistsList={this.state.ukraineTopArtists}/>
-            </Suspense>)
+                    atistsList={this.state.ukraineTopArtists}/>)
     };
     searchResultPage = () => {
         return (
@@ -140,15 +160,16 @@ class App extends Component {
 
     componentDidMount() {
         this.getFavoriteFromStorage();
-        fetch(`http://ws.audioscrobbler.com/2.0/?method=geo.gettopartists&country=ukraine&limit=12&page=1&api_key=${this.state.KEY}&format=json`)
-            .then(
-                response => {
-                    response.json()
-                        .then((data) => {
-                            this.setState({ukraineTopArtists: data.topartists.artist});
-                        })
-                }
-            );
+        this.fetchMoreData()
+        // fetch(`http://ws.audioscrobbler.com/2.0/?method=geo.gettopartists&country=ukraine&limit=12&page=1&api_key=${this.state.KEY}&format=json`)
+        //     .then(
+        //         response => {
+        //             response.json()
+        //                 .then((data) => {
+        //                     this.setState({ukraineTopArtists: data.topartists.artist});
+        //                 })
+        //         }
+        //     );
     }
 
     componentDidUpdate(prevState) {

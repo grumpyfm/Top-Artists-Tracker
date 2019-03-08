@@ -1,4 +1,6 @@
 import React from 'react';
+import InfiniteScroll from 'react-infinite-scroll-component';
+
 
 import {Link, Redirect} from "react-router-dom";
 
@@ -9,8 +11,18 @@ const Dashboard=(props)=> {
             return <Redirect to={`/artist/${props.artistPath}`}/>
         }
         if (props.atistsList.length !== 0) {
+            console.log('length',props.atistsList);
+
             return (
-                props.atistsList.map((el, index) =>
+                <div>
+                <InfiniteScroll
+                    className='d-flex justify-content-around flex-wrap'
+                    dataLength={props.atistsList.length}
+                    next={props.fetchMoreData}
+                    hasMore={props.hasMore}
+                    loader={<h4>Loading...</h4>}
+                    >
+                    {props.atistsList.map((el, index) =>(
                     <div className='artistItem ' key={index}>
                         <Link to={{pathname: `/artist/${el.name}`}}
                               onClick={() => props.handleArtistClick(el.name)}>
@@ -22,9 +34,10 @@ const Dashboard=(props)=> {
                         <i key={index} onClick={() => {
                             props.addRemoveFavorite(el)
                         }} className={`fas fa-heart heartIcon ${checkIfFav(el) ? ('red') : ('')}`}/>
-                    </div>
+                    </div>))}
+                </InfiniteScroll>
+                </div>
                 )
-            )
         } else {
             return (<div>List is empty</div>
             )
