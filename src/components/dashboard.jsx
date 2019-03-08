@@ -1,52 +1,52 @@
-import React from 'react';
+import React, {Component} from 'react';
 import InfiniteScroll from 'react-infinite-scroll-component';
+import {Link, Redirect} from 'react-router-dom';
 
+class Dashboard extends Component {
 
-import {Link, Redirect} from "react-router-dom";
-
-const Dashboard=(props)=> {
-        if (props.toSearchList === true) {
+    render() {
+        if (this.props.toSearchList === true) {
             return <Redirect to='/searchResult'/>
-        } else if (props.toSearchItem === true) {
-            return <Redirect to={`/artist/${props.artistPath}`}/>
+        } else if (this.props.toSearchItem === true) {
+            return <Redirect to={`/artist/${this.props.artistPath}`}/>
         }
-        if (props.atistsList.length !== 0) {
-            console.log('length',props.atistsList);
-
+        if (this.props.atistsList.length !== 0) {
             return (
                 <div>
-                <InfiniteScroll
-                    className='d-flex justify-content-around flex-wrap'
-                    dataLength={props.atistsList.length}
-                    next={props.fetchMoreData}
-                    hasMore={props.hasMore}
-                    loader={<h4>Loading...</h4>}
-                    >
-                    {props.atistsList.map((el, index) =>(
-                    <div className='artistItem ' key={index}>
-                        <Link to={{pathname: `/artist/${el.name}`}}
-                              onClick={() => props.handleArtistClick(el.name)}>
-                            <div>
-                                <img className='songListImg' alt='' src={el.image[3]['#text'] !== '' ? (el.image[3]['#text']) : (props.defaultImage)}/>
-                            </div>
-                            <p> {el.name}</p>
-                        </Link>
-                        <i key={index} onClick={() => {
-                            props.addRemoveFavorite(el)
-                        }} className={`fas fa-heart heartIcon ${checkIfFav(el) ? ('red') : ('')}`}/>
-                    </div>))}
-                </InfiniteScroll>
+                    <InfiniteScroll
+                        className='d-flex justify-content-around flex-wrap'
+                        dataLength={this.props.atistsList.length}
+                        next={this.props.fetchMoreData}
+                        hasMore={this.props.hasMore}
+                        loader={<h4>Loading...</h4>}>
+                        {this.props.atistsList.map((el, index) => (
+                            <div className='artistItem ' key={index}>
+                                <img className='songListImg' alt=''
+                                     src={el.image[3]['#text'] !== '' ? (el.image[3]['#text']) : (this.props.defaultImage)}/>
+                                <Link to={{pathname: `/artist/${el.name}`}}
+                                      onClick={(e) => {
+                                          e.stopPropagation();
+                                          this.props.handleArtistClick(el.name)
+                                      }}>
+                                    <h6 className='artistNameTable'> {el.name}</h6>
+                                </Link>
+                                <i key={index} onClick={() => {
+                                    this.props.addRemoveFavorite(el)
+                                }}
+                                   className={`fas fa-heart heartIcon ${this.checkIfFav(el) ? ('red') : ('')}`}/>
+                            </div>))}
+                    </InfiniteScroll>
                 </div>
-                )
+            )
         } else {
-            return (<div>List is empty</div>
+            return (<div></div>
             )
         }
-
-  function checkIfFav(artist){
-        return props.favoriteArtists.find((el) => el.name === artist.name);
     }
 
-};
+    checkIfFav = (artist) => {
+        return this.props.favoriteArtists.find((el) => el.name === artist.name);
+    }
+}
 
 export default Dashboard;

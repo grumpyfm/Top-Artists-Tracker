@@ -1,28 +1,32 @@
 import React, {Component} from 'react';
-import {Link, Redirect} from "react-router-dom";
+import {Link, Redirect} from 'react-router-dom';
 
 
 class ArtistDetail extends Component {
+
     render() {
         if (this.props.toSearchList === true) {
             return <Redirect to='/searchResult'/>
         } else if (this.props.toSearchItem === true) {
             return <Redirect to={`/artist/${this.props.artistPath}`}/>
         }
-        return (
-            this.props.artistDetail.length !== 0 && (
+        if (this.props.artistDetail.length !== 0) {
+            let text = this.props.artistDetail.bio.summary.split('<a');
+            let newSummary = text[0] + '.';
+            return (
                 <div>
-                    <div className=' d-flex justify-content-around flex-wrap'>
-                        <div className='artistDetailBlock'><img src={this.props.artistDetail.image[4]['#text']} alt=""/>
+                    <div className='d-flex justify-content-around flex-wrap'>
+                        <div className='artistDetailBlock'><img src={this.props.artistDetail.image[4]['#text']} alt=''/>
                             <i key={this.props.artistDetail.name} onClick={() => {
                                 this.props.addRemoveFavorite(this.props.artistDetail)
                             }}
                                className={`fas fa-heart heartIcon ${this.checkIfFav(this.props.artistDetail) ? ('red') : ('')}`}/>
                         </div>
-                        <div>{this.props.artistDetail.bio.summary}</div>
+                        <div>{newSummary}</div>
                     </div>
                     <h3>Similar artists:</h3>
-                    <div className=' d-flex justify-content-around flex-wrap'>{this.props.artistDetail.similar.artist.map((el, index) =>
+                    <div
+                        className=' d-flex justify-content-around flex-wrap'>{this.props.artistDetail.similar.artist.map((el, index) =>
                         <div className='artistItem' key={index}>
                             <Link to={{pathname: `/artist/${el.name}`}}
                                   onClick={() => this.props.handleArtistClick(el.name)}>
@@ -34,7 +38,9 @@ class ArtistDetail extends Component {
                         </div>)}
                     </div>
                 </div>)
-        )
+        } else {
+            return (<div></div>)
+        }
     }
 
     componentWillMount() {

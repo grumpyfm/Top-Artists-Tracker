@@ -1,11 +1,12 @@
-import React, {Component, lazy, Suspense} from 'react';
-import {BrowserRouter as Router, Link, Route} from "react-router-dom";
+import React, {Component} from 'react';
+import {BrowserRouter as Router, Link, Route} from 'react-router-dom';
 import './App.css';
 import ArtistDetail from './components/artistDetail';
 import Autocomplete from 'react-autocomplete';
-import {Form, Nav, Navbar} from "react-bootstrap";
+import {Form, Nav, Navbar} from 'react-bootstrap';
 import Dashboard from './components/dashboard';
-
+import {DragDropContext} from 'react-beautiful-dnd';
+import Favorite from './components/favorites';
 
 class App extends Component {
     state = {
@@ -27,37 +28,18 @@ class App extends Component {
         toSearchList: false,
         toSearchItem: false,
     };
-    fetchMoreData = () => {
-        fetch(`http://ws.audioscrobbler.com/2.0/?method=geo.gettopartists&country=ukraine&limit=12}&page=${this.state.fetchPage}&api_key=${this.state.KEY}&format=json`)
-            .then(
-                response => {
-                    response.json()
-                        .then((data) => {
-                            let res=this.state.ukraineTopArtists;
-                            console.log('res1',res);
-                            data.topartists.artist.forEach(artist=>res.push(artist));
-                            console.log('res2',res);
-                            this.setState({ukraineTopArtists:res });
-                            let page=this.state.fetchPage+1;
-                            this.setState({fetchPage:page});
-                            if(data.topartists.artist.length<12){
-                                this.setState({ hasMore: false });
 
-                            }
-                        })
-                }
-            )
-        };
+
     render() {
         return (
             <Router>
-                <div>
-                    <Navbar bg="light" expand="lg">
-                        <Navbar.Toggle aria-controls="basic-navbar-nav"/>
-                        <Navbar.Collapse id="basic-navbar-nav">
-                            <Nav className="mr-auto">
-                                <Link className="navbar-brand" onClick={this.cleanSearchValue} to="/">Artists</Link>
-                                <Link className="navbar-brand" onClick={this.cleanSearchValue}
+                <div className='container-fluid'>
+                    <Navbar bg='light' expand='lg'>
+                        <Navbar.Toggle aria-controls='basic-navbar-nav'/>
+                        <Navbar.Collapse id='basic-navbar-nav'>
+                            <Nav className='mr-auto'>
+                                <Link className='navbar-brand' onClick={this.cleanSearchValue} to='/'>Artists</Link>
+                                <Link className='navbar-brand' onClick={this.cleanSearchValue}
                                       to='/favorites'>Favorites</Link>
                             </Nav>
                             <Form inline onSubmit={(e) => this.handleSubmit(e)}>
@@ -97,23 +79,21 @@ class App extends Component {
             </Router>
         );
     }
-    handlePageChange=(pageNumber) =>{
-        console.log(`active page is ${pageNumber}`);
-        this.setState({activePage: pageNumber});
-    };
+
     homePage = () => {
         return (
-                <Dashboard
-                    hasMore={this.state.hasMore}
-                    fetchMoreData={this.fetchMoreData}
-                    artistPath={this.state.artistPath}
-                    defaultImage={this.state.defaultImage}
-                    favoriteArtists={this.state.favoriteArtists}
-                    addRemoveFavorite={this.addRemoveFavorite}
-                    toSearchItem={this.state.toSearchItem}
-                    toSearchList={this.state.toSearchList}
-                    handleArtistClick={this.handleArtistClick}
-                    atistsList={this.state.ukraineTopArtists}/>)
+            <Dashboard
+                hasMore={this.state.hasMore}
+                fetchMoreData={this.fetchMoreData}
+                artistPath={this.state.artistPath}
+                defaultImage={this.state.defaultImage}
+                favoriteArtists={this.state.favoriteArtists}
+                addRemoveFavorite={this.addRemoveFavorite}
+                toSearchItem={this.state.toSearchItem}
+                toSearchList={this.state.toSearchList}
+                handleArtistClick={this.handleArtistClick}
+                atistsList={this.state.ukraineTopArtists}/>
+        )
     };
     searchResultPage = () => {
         return (
@@ -130,16 +110,20 @@ class App extends Component {
     };
     favoritesPage = () => {
         return (
-            <Dashboard
-                getFavoriteFromStorage={this.getFavoriteFromStorage}
-                artistPath={this.state.artistPath}
-                defaultImage={this.state.defaultImage}
-                favoriteArtists={this.state.favoriteArtists}
-                addRemoveFavorite={this.addRemoveFavorite}
-                toSearchItem={this.state.toSearchItem}
-                toSearchList={this.state.toSearchList}
-                handleArtistClick={this.handleArtistClick}
-                atistsList={this.state.favoriteArtists}/>)
+            <DragDropContext
+                onDragEnd={this.onDragEnd}>
+                <Favorite
+                    getFavoriteFromStorage={this.getFavoriteFromStorage}
+                    artistPath={this.state.artistPath}
+                    defaultImage={this.state.defaultImage}
+                    favoriteArtists={this.state.favoriteArtists}
+                    addRemoveFavorite={this.addRemoveFavorite}
+                    toSearchItem={this.state.toSearchItem}
+                    toSearchList={this.state.toSearchList}
+                    handleArtistClick={this.handleArtistClick}
+                    atistsList={this.state.favoriteArtists}/>
+            </DragDropContext>)
+
     };
     artistDetailPage = () => {
         return (
@@ -153,31 +137,59 @@ class App extends Component {
                 artistDetail={this.state.artistDetail}
                 handleArtistDetails={this.handleArtistDetails}/>)
     };
-    getFavoriteFromStorage = () => {
-        let favorite = JSON.parse(localStorage.getItem('favoriteArtists'));
-        this.setState({favoriteArtists: favorite});
-    };
 
     componentDidMount() {
         this.getFavoriteFromStorage();
         this.fetchMoreData()
-        // fetch(`http://ws.audioscrobbler.com/2.0/?method=geo.gettopartists&country=ukraine&limit=12&page=1&api_key=${this.state.KEY}&format=json`)
-        //     .then(
-        //         response => {
-        //             response.json()
-        //                 .then((data) => {
-        //                     this.setState({ukraineTopArtists: data.topartists.artist});
-        //                 })
-        //         }
-        //     );
+
     }
 
     componentDidUpdate(prevState) {
-        console.log('componentDidUpdate');
         if (prevState.favoriteArtists !== this.state.favoriteArtists) {
             localStorage.setItem('favoriteArtists', JSON.stringify(this.state.favoriteArtists));
         }
     }
+
+    onDragEnd = (result) => {
+        const {destination, source} = result;
+
+        if (!destination) {
+            return;
+        }
+        if (destination.droppableId === source.droppableId && destination.index === source.index) {
+            return;
+        }
+        const favorite = this.state.favoriteArtists;
+        let item = favorite[source.index];
+        favorite.splice(source.index, 1);
+        favorite.splice(destination.index, 0, item);
+        this.setState({favoriteArtists: favorite});
+
+    };
+    fetchMoreData = () => {
+        fetch(`http://ws.audioscrobbler.com/2.0/?method=geo.gettopartists&country=ukraine&limit=12}&page=${this.state.fetchPage}&api_key=${this.state.KEY}&format=json`)
+            .then(
+                response => {
+                    response.json()
+                        .then((data) => {
+                            let res = this.state.ukraineTopArtists;
+                            data.topartists.artist.forEach(artist => res.push(artist));
+                            this.setState({ukraineTopArtists: res});
+                            let page = this.state.fetchPage + 1;
+                            this.setState({fetchPage: page});
+                            if (data.topartists.artist.length < 12) {
+                                this.setState({hasMore: false});
+
+                            }
+                        })
+                }
+            )
+    };
+
+    getFavoriteFromStorage = () => {
+        let favorite = JSON.parse(localStorage.getItem('favoriteArtists'));
+        this.setState({favoriteArtists: favorite});
+    };
 
     handleSubmit = (e) => {
         e.preventDefault();
@@ -214,6 +226,7 @@ class App extends Component {
                 })
         }
     };
+
     cleanSearchValue = () => {
         this.setState({
             toSearchList: false
@@ -226,9 +239,7 @@ class App extends Component {
         });
 
     };
-    setValue = (value) => {
-        this.setState({value: value});
-    };
+
     handleSelect = (value) => {
         if (this.state.value !== '') {
             this.setState({
@@ -245,6 +256,7 @@ class App extends Component {
 
         }
     };
+
     addRemoveFavorite = (atist) => {
         let exist = this.state.favoriteArtists.filter((obj => {
             return obj.name === atist.name
@@ -261,17 +273,19 @@ class App extends Component {
         }
         this.setState({favoriteArtists: res})
     };
+
     handleArtistClick = (name) => {
-        console.log(name);
         this.setState({artistPath: name});
         this.setState({
             toSearchList: false
         });
     };
+
     updateArtistDetails = (artist) => {
         this.setState({artistDetail: artist});
 
     };
+
     handleArtistDetails = () => {
         fetch(`http://ws.audioscrobbler.com/2.0/?method=artist.getinfo&artist=${this.state.artistPath}&api_key=${this.state.KEY}&format=json`)
             .then(
