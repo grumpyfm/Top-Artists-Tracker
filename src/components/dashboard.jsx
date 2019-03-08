@@ -1,4 +1,5 @@
 import React from 'react';
+
 import {Link, Redirect} from "react-router-dom";
 
 const Dashboard=(props)=> {
@@ -14,7 +15,7 @@ const Dashboard=(props)=> {
                         <Link to={{pathname: `/artist/${el.name}`}}
                               onClick={() => props.handleArtistClick(el.name)}>
                             <div>
-                                <img className='songListImg' alt='' src={el.image[2]['#text'] !== '' ? (el.image[2]['#text']) : (props.defaultImage)}/>
+                                <img className='songListImg' alt='' src={el.image[3]['#text'] !== '' ? (el.image[3]['#text']) : (props.defaultImage)}/>
                             </div>
                             <p> {el.name}</p>
                         </Link>
@@ -22,7 +23,8 @@ const Dashboard=(props)=> {
                             props.addRemoveFavorite(el)
                         }} className={`fas fa-heart heartIcon ${checkIfFav(el) ? ('red') : ('')}`}/>
                     </div>
-                ))
+                )
+            )
         } else {
             return (<div>List is empty</div>
             )

@@ -3,14 +3,13 @@
 
 .artistItem {
     word-wrap: break-word;
-    max-width: 174px;
     position: relative;
     text-align: center;
     margin: 0.5rem;
 }
 
 .songListImg {
-    width: 174px;
+    width: 100%;
 }
 
 .heartIcon {

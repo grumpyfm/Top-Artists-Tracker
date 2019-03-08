@@ -5,12 +5,15 @@ import ArtistDetail from './components/artistDetail';
 import Autocomplete from 'react-autocomplete';
 import {Form, Nav, Navbar} from "react-bootstrap";
 
+
 const Dashboard = lazy(() => import('./components/dashboard'));
 
 class App extends Component {
     state = {
         KEY: '86ef0c95113dbb5b722096388d0efd20',
         defaultImage: 'http://warnerclassics.de.457elmp30.blackmesh.com/img_style/default_cover_m.jpg',
+        activePage: 15,
+
         ukraineTopArtists: [],
         favoriteArtists: [],
         artistDetail: [],
@@ -34,7 +37,8 @@ class App extends Component {
                         <Navbar.Collapse id="basic-navbar-nav">
                             <Nav className="mr-auto">
                                 <Link className="navbar-brand" onClick={this.cleanSearchValue} to="/">Artists</Link>
-                                <Link className="navbar-brand" onClick={this.cleanSearchValue} to='/favorites'>Favorites</Link>
+                                <Link className="navbar-brand" onClick={this.cleanSearchValue}
+                                      to='/favorites'>Favorites</Link>
                             </Nav>
                             <Form inline onSubmit={(e) => this.handleSubmit(e)}>
                                 <div className='mr-sm-2 searchForm'>
@@ -73,7 +77,10 @@ class App extends Component {
             </Router>
         );
     }
-
+    handlePageChange=(pageNumber) =>{
+        console.log(`active page is ${pageNumber}`);
+        this.setState({activePage: pageNumber});
+    };
     homePage = () => {
         return (
             <Suspense fallback={<div>Loading...</div>}>
@@ -104,6 +111,7 @@ class App extends Component {
     favoritesPage = () => {
         return (
             <Dashboard
+                getFavoriteFromStorage={this.getFavoriteFromStorage}
                 artistPath={this.state.artistPath}
                 defaultImage={this.state.defaultImage}
                 favoriteArtists={this.state.favoriteArtists}
@@ -125,9 +133,14 @@ class App extends Component {
                 artistDetail={this.state.artistDetail}
                 handleArtistDetails={this.handleArtistDetails}/>)
     };
+    getFavoriteFromStorage = () => {
+        let favorite = JSON.parse(localStorage.getItem('favoriteArtists'));
+        this.setState({favoriteArtists: favorite});
+    };
 
     componentDidMount() {
-        fetch(`http://ws.audioscrobbler.com/2.0/?method=geo.gettopartists&country=ukraine&api_key=${this.state.KEY}&format=json`)
+        this.getFavoriteFromStorage();
+        fetch(`http://ws.audioscrobbler.com/2.0/?method=geo.gettopartists&country=ukraine&limit=12&page=1&api_key=${this.state.KEY}&format=json`)
             .then(
                 response => {
                     response.json()
@@ -138,6 +151,12 @@ class App extends Component {
             );
     }
 
+    componentDidUpdate(prevState) {
+        console.log('componentDidUpdate');
+        if (prevState.favoriteArtists !== this.state.favoriteArtists) {
+            localStorage.setItem('favoriteArtists', JSON.stringify(this.state.favoriteArtists));
+        }
+    }
 
     handleSubmit = (e) => {
         e.preventDefault();
@@ -186,8 +205,8 @@ class App extends Component {
         });
 
     };
-    setValue=(value)=>{
-        this.setState({value:value});
+    setValue = (value) => {
+        this.setState({value: value});
     };
     handleSelect = (value) => {
         if (this.state.value !== '') {
@@ -206,7 +225,9 @@ class App extends Component {
         }
     };
     addRemoveFavorite = (atist) => {
-        let exist = this.state.favoriteArtists.filter((obj => {return obj.name === atist.name}));
+        let exist = this.state.favoriteArtists.filter((obj => {
+            return obj.name === atist.name
+        }));
         let res = this.state.favoriteArtists;
 
         if (exist.length === 0) {
@@ -218,7 +239,6 @@ class App extends Component {
             res.splice(index, 1);
         }
         this.setState({favoriteArtists: res})
-
     };
     handleArtistClick = (name) => {
         console.log(name);
